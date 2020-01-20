@@ -18,6 +18,8 @@
  */
 package org.netbeans.modules.lsp.client.bindings;
 
+import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.parser.Parser;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -154,6 +156,9 @@ public class CompletionProviderImpl implements CompletionProvider {
                     CountDownLatch l = new CountDownLatch(1);
                     //TODO: Location or Location[]
                     Either<List<CompletionItem>, CompletionList> completionResult = server.getTextDocumentService().completion(params).get();
+                    if (completionResult == null) {
+                        return ; //no results
+                    }
                     List<CompletionItem> items;
                     boolean incomplete;
                     if (completionResult.isLeft()) {
@@ -259,9 +264,9 @@ public class CompletionProviderImpl implements CompletionProvider {
                                                             content = resolved.getDocumentation().getRight();
                                                         }
                                                         switch (content.getKind()) {
-                                                            case "markdown":
                                                             default:
                                                             case "plaintext": documentation.append("<pre>\n").append(content.getValue()).append("\n</pre>"); break;
+                                                            case "markdown": documentation.append(HtmlRenderer.builder().build().render(Parser.builder().build().parse(content.getValue()))); break;
                                                         }
                                                     }
                                                     return documentation.toString();
